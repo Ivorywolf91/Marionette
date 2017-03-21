@@ -1,14 +1,15 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // FIXME Expose underscore as global
 _ = require( "underscore" );
-
 var Backbone = require('backbone');
 var Marionette = require('backbone.marionette');
+
+var ToDoModel = require('./models/todo');
 
 
 var ToDo = Marionette.View.extend({
   tagName: 'li',
-  template: require('./templates/todoitem.html')
+  template: require( './templates/todoitem.html' )
 });
 
 
@@ -19,18 +20,22 @@ var TodoList = Marionette.CompositeView.extend({
   childView: ToDo,
   childViewContainer: 'ul',
 
-  ui: {  // 1
+  ui: {
     assignee: '#id_assignee',
     form: 'form',
     text: '#id_text'
   },
 
-  triggers: {  // 2
+  triggers: {
     'submit @ui.form': 'add:todo:item'
   },
 
-  collectionEvents: {  // 3
+  collectionEvents: {
     add: 'itemAdded'
+  },
+
+  modelEvents: {
+    change: 'render'
   },
 
   initialize: function() {
@@ -38,26 +43,61 @@ var TodoList = Marionette.CompositeView.extend({
       {assignee: 'Scott', text: 'Write a book about Marionette'},
       {assignee: 'Andrew', text: 'Do some coding'}
     ]);
+    this.model = new ToDoModel();
   },
 
-  onAddTodoItem: function() {  // 4
-    this.collection.add({
-      assignee: this.ui.assignee.val(),  // 5
+  onAddTodoItem: function() {
+    this.model.set({
+      assignee: this.ui.assignee.val(),
       text: this.ui.text.val()
-    });
-    console.log("onAddTodoItem");
+    }, {validate: true});
+
+    var items = this.model.pick('assignee', 'text');
+    this.collection.add(items);
   },
 
-  itemAdded: function() {  // 6
-    this.ui.assignee.val('');
-    this.ui.text.val('');
-    console.log("itemAdded");
+  itemAdded: function() {
+    this.model.set({
+      assignee: '',
+      text: ''
+    });
   }
+
 });
 
 var todo = new TodoList();
 todo.render();
-},{"./templates/todoitem.html":2,"./templates/todolist.html":3,"backbone":6,"backbone.marionette":4,"underscore":8}],2:[function(require,module,exports){
+},{"./models/todo":2,"./templates/todoitem.html":3,"./templates/todolist.html":4,"backbone":7,"backbone.marionette":5,"underscore":9}],2:[function(require,module,exports){
+var Backbone = require('backbone');
+
+
+var ToDo = Backbone.Model.extend({
+  defaults: {
+    assignee: '',
+    text: ''
+  },
+
+  validate: function(attrs) {
+    var errors = {};
+    var hasError = false;
+    if (!attrs.assignee) {
+      errors.assignee = 'assignee must be set';
+      hasError = true;
+    }
+    if (!attrs.text) {
+      errors.text = 'text must be set';
+      hasError = true;
+    }
+
+    if (hasError) {
+      return errors;
+    }
+  }
+});
+
+
+module.exports = ToDo;
+},{"backbone":7}],3:[function(require,module,exports){
 module.exports = function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
@@ -70,16 +110,20 @@ __p+=''+
 return __p;
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 module.exports = function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
-__p+='<ul></ul>\n<form>\n  <label for="id_text">Todo Text</label>\n  <input type="text" name="text" id="id_text" />\n  <label for="id_assignee">Assign to</label>\n  <input type="text" name="assignee" id="id_assignee" />\n\n  <button id="btn-add">Add Item</button>\n</form>';
+__p+='<ul></ul>\n<form>\n  <label for="id_text">Todo Text</label>\n  <input type="text" name="text" id="id_text" value="'+
+((__t=( text ))==null?'':_.escape(__t))+
+'" />\n  <label for="id_assignee">Assign to</label>\n  <input type="text" name="assignee" id="id_assignee" value="'+
+((__t=( assignee ))==null?'':_.escape(__t))+
+'"/>\n\n  <button id="btn-add">Add Item</button>\n</form>';
 }
 return __p;
 };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // MarionetteJS (Backbone.Marionette)
 // ----------------------------------
 // v3.2.0
@@ -3569,7 +3613,7 @@ return Marionette;
 
 
 
-},{"backbone":6,"backbone.radio":5,"underscore":8}],5:[function(require,module,exports){
+},{"backbone":7,"backbone.radio":6,"underscore":9}],6:[function(require,module,exports){
 // Backbone.Radio v2.0.0
 
 (function (global, factory) {
@@ -3920,7 +3964,7 @@ return Marionette;
 
 }));
 
-},{"backbone":6,"underscore":8}],6:[function(require,module,exports){
+},{"backbone":7,"underscore":9}],7:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.3.3
 
@@ -5844,7 +5888,7 @@ return Marionette;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":7,"underscore":8}],7:[function(require,module,exports){
+},{"jquery":8,"underscore":9}],8:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.2.0
  * https://jquery.com/
@@ -16090,7 +16134,7 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
