@@ -1,6 +1,5 @@
 // FIXME Expose underscore as global
 _ = require( "underscore" );
-jQuery = require("jquery");
 
 var Backbone = require('backbone');
 var Marionette = require('backbone.marionette');
@@ -12,17 +11,44 @@ var ToDo = Marionette.View.extend({
 });
 
 
-var TodoList = Marionette.CollectionView.extend({  
+var TodoList = Marionette.CompositeView.extend({
   el: '#app-hook',
-  tagName: 'ul',
+  template: require('./templates/todolist.html'),
 
   childView: ToDo,
+  childViewContainer: 'ul',
+
+  ui: {  // 1
+    assignee: '#id_assignee',
+    form: 'form',
+    text: '#id_text'
+  },
+
+  triggers: {  // 2
+    'submit @ui.form': 'add:todo:item'
+  },
+
+  collectionEvents: {  // 3
+    add: 'itemAdded'
+  },
 
   initialize: function() {
     this.collection = new Backbone.Collection([
       {assignee: 'Scott', text: 'Write a book about Marionette'},
       {assignee: 'Andrew', text: 'Do some coding'}
     ]);
+  },
+
+  onAddTodoItem: function() {  // 4
+    this.collection.add({
+      assignee: this.ui.assignee.val(),  // 5
+      text: this.ui.text.val()
+    });
+  },
+
+  itemAdded: function() {  // 6
+    this.ui.assignee.val('');
+    this.ui.text.val('');
   }
 });
 
