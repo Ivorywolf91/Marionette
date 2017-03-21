@@ -1,73 +1,26 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // FIXME Expose underscore as global
 _ = require( "underscore" );
-var Backbone = require('backbone');
 var Marionette = require('backbone.marionette');
+var TodoView = require('./views/layout');
 
-var ToDoModel = require('./models/todo');
+var initialData = {
+  items: [
+    {assignee: 'Scott', text: 'Write a book about Marionette'},
+    {assignee: 'Andrew', text: 'Do some coding'}
+  ]
+};
 
-
-var ToDo = Marionette.View.extend({
-  tagName: 'li',
-  template: require( './templates/todoitem.html' )
-});
-
-
-var TodoList = Marionette.CompositeView.extend({
-  el: '#app-hook',
-  template: require('./templates/todolist.html'),
-
-  childView: ToDo,
-  childViewContainer: 'ul',
-
-  ui: {
-    assignee: '#id_assignee',
-    form: 'form',
-    text: '#id_text'
-  },
-
-  triggers: {
-    'submit @ui.form': 'add:todo:item'
-  },
-
-  collectionEvents: {
-    add: 'itemAdded'
-  },
-
-  modelEvents: {
-    change: 'render'
-  },
-
-  initialize: function() {
-    this.collection = new Backbone.Collection([
-      {assignee: 'Scott', text: 'Write a book about Marionette'},
-      {assignee: 'Andrew', text: 'Do some coding'}
-    ]);
-    this.model = new ToDoModel();
-  },
-
-  onAddTodoItem: function() {
-    this.model.set({
-      assignee: this.ui.assignee.val(),
-      text: this.ui.text.val()
-    }, {validate: true});
-
-    var items = this.model.pick('assignee', 'text');
-    this.collection.add(items);
-  },
-
-  itemAdded: function() {
-    this.model.set({
-      assignee: '',
-      text: ''
-    });
+var app = new Marionette.Application({
+  onStart: function(options) {
+    var todo = new TodoView(options);
+    todo.render();
+    todo.triggerMethod('show');
   }
-
 });
 
-var todo = new TodoList();
-todo.render();
-},{"./models/todo":2,"./templates/todoitem.html":3,"./templates/todolist.html":4,"backbone":7,"backbone.marionette":5,"underscore":9}],2:[function(require,module,exports){
+app.start({initialData: initialData});
+},{"./views/layout":7,"backbone.marionette":9,"underscore":13}],2:[function(require,module,exports){
 var Backbone = require('backbone');
 
 
@@ -97,7 +50,29 @@ var ToDo = Backbone.Model.extend({
 
 
 module.exports = ToDo;
-},{"backbone":7}],3:[function(require,module,exports){
+},{"backbone":11}],3:[function(require,module,exports){
+module.exports = function(obj){
+var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
+with(obj||{}){
+__p+='<label for="id_text">Todo Text</label>\n<input type="text" name="text" id="id_text" value="'+
+((__t=( text ))==null?'':_.escape(__t))+
+'" />\n<label for="id_assignee">Assign to</label>\n<input type="text" name="assignee" id="id_assignee" value="'+
+((__t=( assignee ))==null?'':_.escape(__t))+
+'"/>\n\n<button id="btn-add">Add Item</button>';
+}
+return __p;
+};
+
+},{}],4:[function(require,module,exports){
+module.exports = function(obj){
+var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
+with(obj||{}){
+__p+='<div class="list"></div>\n<div class="form"></div>';
+}
+return __p;
+};
+
+},{}],5:[function(require,module,exports){
 module.exports = function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
@@ -110,20 +85,109 @@ __p+=''+
 return __p;
 };
 
-},{}],4:[function(require,module,exports){
-module.exports = function(obj){
-var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
-with(obj||{}){
-__p+='<ul></ul>\n<form>\n  <label for="id_text">Todo Text</label>\n  <input type="text" name="text" id="id_text" value="'+
-((__t=( text ))==null?'':_.escape(__t))+
-'" />\n  <label for="id_assignee">Assign to</label>\n  <input type="text" name="assignee" id="id_assignee" value="'+
-((__t=( assignee ))==null?'':_.escape(__t))+
-'"/>\n\n  <button id="btn-add">Add Item</button>\n</form>';
-}
-return __p;
-};
+},{}],6:[function(require,module,exports){
+// views/form.js
+var Marionette = require('backbone.marionette');
 
-},{}],5:[function(require,module,exports){
+
+var FormView = Marionette.View.extend({
+  tagName: 'form',
+  template: require('../templates/form.html'),
+
+  triggers: {
+    submit: 'add:todo:item'
+  },
+
+  modelEvents: {
+    change: 'render'
+  },
+
+  ui: {
+    assignee: '#id_assignee',
+    text: '#id_text'
+  }
+});
+
+
+module.exports = FormView;
+},{"../templates/form.html":3,"backbone.marionette":9}],7:[function(require,module,exports){
+var Backbone = require('backbone');
+var Marionette = require('backbone.marionette');
+var ToDoModel = require('../models/todo');
+
+var FormView = require('./form');
+var ListView = require('./list');
+
+
+var Layout = Marionette.View.extend({
+  el: '#app-hook',
+
+  template: require('../templates/layout.html'),
+
+  regions: {
+    form: '.form',
+    list: '.list'
+  },
+
+  collectionEvents: {
+    add: 'itemAdded'
+  },
+
+  initialize: function() {
+    this.collection = new Backbone.Collection([
+      {assignee: 'Scott', text: 'Write a book about Marionette'},
+      {assignee: 'Andrew', text: 'Do some coding'}
+    ]);
+    this.model = new ToDoModel();
+  },
+
+  onShow: function() {
+    var formView = new FormView({model: this.model});
+    var listView = new ListView({collection: this.collection});
+
+    this.showChildView('form', formView);
+    this.showChildView('list', listView);
+  },
+
+  onChildviewAddTodoItem: function() {
+    
+    this.model.set({
+      assignee: this.getRegion('form').currentView.ui.assignee.val(),
+      text: this.getRegion('form').currentView.ui.text.val()
+    }, {validate: true});
+    
+    var items = this.model.pick('assignee', 'text');
+    this.collection.add(items);
+  },
+
+  itemAdded: function() {
+    this.model.set({
+      assignee: '',
+      text: ''
+    });
+  }
+
+});
+
+module.exports = Layout;
+},{"../models/todo":2,"../templates/layout.html":4,"./form":6,"./list":8,"backbone":11,"backbone.marionette":9}],8:[function(require,module,exports){
+// views/list.js
+var Marionette = require('backbone.marionette');
+
+var ToDo = Marionette.View.extend({
+  tagName: 'li',
+  template: require('../templates/todoitem.html')
+});
+
+
+var TodoList = Marionette.CollectionView.extend({
+  tagName: 'ul',
+  childView: ToDo
+});
+
+
+module.exports = TodoList;
+},{"../templates/todoitem.html":5,"backbone.marionette":9}],9:[function(require,module,exports){
 // MarionetteJS (Backbone.Marionette)
 // ----------------------------------
 // v3.2.0
@@ -3613,7 +3677,7 @@ return Marionette;
 
 
 
-},{"backbone":7,"backbone.radio":6,"underscore":9}],6:[function(require,module,exports){
+},{"backbone":11,"backbone.radio":10,"underscore":13}],10:[function(require,module,exports){
 // Backbone.Radio v2.0.0
 
 (function (global, factory) {
@@ -3964,7 +4028,7 @@ return Marionette;
 
 }));
 
-},{"backbone":7,"underscore":9}],7:[function(require,module,exports){
+},{"backbone":11,"underscore":13}],11:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.3.3
 
@@ -5888,7 +5952,7 @@ return Marionette;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":8,"underscore":9}],8:[function(require,module,exports){
+},{"jquery":12,"underscore":13}],12:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.2.0
  * https://jquery.com/
@@ -16134,7 +16198,7 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],9:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
