@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "./node_modules/browserify/bin/cmd.js -t node-underscorify app/driver.js -o static/js/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Thomas",
@@ -14,5 +15,7 @@
     "jquery": "^3.2.0",
     "underscore": "^1.8.3"
   },
-  "build": "./node_modules/browserify/bin/cmd.js app.js -o build.js"
+  "devDependencies": {
+    "node-underscorify": "0.0.14"
+  }
 }
