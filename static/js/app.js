@@ -1,19 +1,40 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var Marionette = require('backbone.marionette');  // 1
+// FIXME Expose underscore as global
+_ = require( "underscore" );
+
+var Backbone = require('backbone');
+var Marionette = require('backbone.marionette');
 
 
-var HelloWorld = Marionette.View.extend({  // 2
-  el: '#app-hook',  // 3
-  template: require('./templates/layout.html')  // 4
+var TodoList = Marionette.View.extend({  
+  el: '#app-hook',  
+  template: require('./templates/layout.html'),
+
+  initialize: function() {
+    this.model = new Backbone.Model({
+      items: [
+        {assignee: 'Scott', text: 'Write a book about Marionette'},
+        {assignee: 'Andrew', text: 'Do some coding'}
+      ]
+    });
+  }
 });
 
-var hello = new HelloWorld();  // 5
-hello.render();  // 6
-},{"./templates/layout.html":2,"backbone.marionette":3}],2:[function(require,module,exports){
+var todo = new TodoList();
+todo.render();
+},{"./templates/layout.html":2,"backbone":5,"backbone.marionette":3,"underscore":7}],2:[function(require,module,exports){
 module.exports = function(obj){
 var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments,'');};
 with(obj||{}){
-__p+='<p>Hello, world!</p>';
+__p+='<ul>\n  ';
+ _.each(items, function(item) { 
+__p+='\n    <li>'+
+((__t=( item.text ))==null?'':_.escape(__t))+
+' &mdash; '+
+((__t=( item.assignee ))==null?'':_.escape(__t))+
+'\n  ';
+ }) 
+__p+='\n</ul>';
 }
 return __p;
 };

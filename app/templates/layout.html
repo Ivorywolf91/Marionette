@@ -1,1 +1,5 @@
-<p>Hello, world!</p>
+<ul>
+  <% _.each(items, function(item) { %>
+    <li><%- item.text %> &mdash; <%- item.assignee %>
+  <% }) %>
+</ul>
